@@ -4,10 +4,17 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Migrasi tabel aplikasi penyewaan garasi:
+ *  - users (tambahan kolom), garages, vehicles, rentals, rental_extensions.
+ * Jalankan dengan: php artisan migrate
+ */
 return new class extends Migration
 {
+    /** Membuat tabel dan kolom. */
     public function up(): void
     {
+        // Tambahan kolom pada tabel users bawaan Laravel: data penyewa, peran, dan status verifikasi.
         Schema::table('users', function (Blueprint $t) {
             $t->string('nik', 16)->unique()->nullable();
             $t->string('phone', 20)->nullable();
@@ -15,6 +22,7 @@ return new class extends Migration
             $t->enum('verification_status', ['pending', 'accepted', 'rejected'])->default('pending');
         });
 
+        // Master garasi. Kode unik; price_per_kwh hanya terisi untuk mobil listrik.
         Schema::create('garages', function (Blueprint $t) {
             $t->id();
             $t->string('code', 4)->unique();                 // S001 / C010 / E001
@@ -24,6 +32,7 @@ return new class extends Migration
             $t->timestamps();
         });
 
+        // Kendaraan milik penyewa (dihapus otomatis bila akun penyewa dihapus).
         Schema::create('vehicles', function (Blueprint $t) {
             $t->id();
             $t->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -35,6 +44,7 @@ return new class extends Migration
             $t->timestamps();
         });
 
+        // Transaksi sewa. FK tanpa cascade: garasi/penyewa yang punya riwayat sewa tidak bisa dihapus.
         Schema::create('rentals', function (Blueprint $t) {
             $t->id();
             $t->foreignId('user_id')->constrained();
@@ -49,9 +59,11 @@ return new class extends Migration
             $t->unsignedBigInteger('total_cost');
             $t->string('payment_proof');
             $t->timestamps();
+            // Indeks mempercepat query cek bentrok jadwal per garasi.
             $t->index(['garage_id', 'start_date', 'end_date']);
         });
 
+        // Riwayat perpanjangan sewa (dihapus otomatis bila sewa induknya dihapus).
         Schema::create('rental_extensions', function (Blueprint $t) {
             $t->id();
             $t->foreignId('rental_id')->constrained()->cascadeOnDelete();
@@ -64,6 +76,7 @@ return new class extends Migration
         });
     }
 
+    /** Membatalkan migrasi (rollback): hapus tabel dari yang paling bergantung. */
     public function down(): void
     {
         Schema::dropIfExists('rental_extensions');
