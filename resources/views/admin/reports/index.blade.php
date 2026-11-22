@@ -1,12 +1,11 @@
+{{-- // halaman admin untuk laporan penyewaan --}}
 @extends('layouts.app')
 @section('title', 'Laporan Penyewaan')
 @section('content')
 <div class="card">
     <h2>Laporan Penyewaan Garasi</h2>
-    {{-- Form filter memakai GET agar filter tampil di URL dan tetap terbawa saat pindah halaman. --}}
     <form method="GET" action="{{ route('admin.reports') }}">
         <div class="grid">
-            {{-- Dropdown tahun: daftar $years berasal dari tahun yang ada di data sewa + tahun berjalan. --}}
             <div><label>Tahun</label>
                 <select name="year"><option value="">Semua</option>
                     @foreach($years as $y)<option value="{{ $y }}" @selected(($filters['year'] ?? null) == $y)>{{ $y }}</option>@endforeach
@@ -31,7 +30,6 @@
 </div>
 <div class="card">
     <table>
-        {{-- Hasil laporan; filter tahun/bulan/hari memakai tanggal mulai sewa. --}}
         <tr><th>Mulai</th><th>Selesai</th><th>Garasi</th><th>Penyewa</th><th>Kendaraan</th><th>Tipe</th><th>Total</th></tr>
         @forelse($rentals as $r)
             <tr>
@@ -44,7 +42,6 @@
             <tr><td colspan="7">Tidak ada data.</td></tr>
         @endforelse
     </table>
-    {{-- Total biaya hanya untuk baris pada halaman yang sedang ditampilkan. --}}
     <p><strong>Total halaman ini: Rp {{ number_format($total, 0, ',', '.') }}</strong></p>
     {{ $rentals->links() }}
 </div>

@@ -1,9 +1,9 @@
+{{-- // tampilan admin saat buat garasi --}}
 @extends('layouts.app')
 @section('title', 'Buat Garasi')
 @section('content')
 <div class="card" style="max-width:480px">
     <h2>Buat Garasi</h2>
-    {{-- Form buat garasi massal. Kode ID (S001/C010/E001) dibuat otomatis oleh GarageCodeGenerator di server. --}}
     <form method="POST" action="{{ route('admin.garages.store') }}">
         @csrf
         <label>Tipe Garasi</label>
@@ -18,8 +18,8 @@
         <button class="btn">Buat</button>
     </form>
 </div>
-<!-- JavaScript: tampilkan input harga kWh hanya bila tipe = Garasi Mobil Listrik. -->
 <script>
+// tampilkan tarif listrik kalau dipilih mobil listrik
 const t = document.getElementById('type');
 const toggle = () => document.getElementById('kwh_row').style.display = t.value === 'mobil_listrik' ? '' : 'none';
 t.addEventListener('change', toggle); toggle();

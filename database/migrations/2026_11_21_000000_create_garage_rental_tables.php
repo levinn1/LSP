@@ -4,17 +4,12 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Migrasi tabel aplikasi penyewaan garasi:
- *  - users (tambahan kolom), garages, vehicles, rentals, rental_extensions.
- * Jalankan dengan: php artisan migrate
- */
 return new class extends Migration
 {
-    /** Membuat tabel dan kolom. */
+    // tambah role pengguna dan buat tabel penyewaan garasi
     public function up(): void
     {
-        // Tambahan kolom pada tabel users bawaan Laravel: data penyewa, peran, dan status verifikasi.
+        // tambah identitas penyewa, nomor telepon, peran, dan status verif ke tabel pengguna
         Schema::table('users', function (Blueprint $t) {
             $t->string('nik', 16)->unique()->nullable();
             $t->string('phone', 20)->nullable();
@@ -22,17 +17,17 @@ return new class extends Migration
             $t->enum('verification_status', ['pending', 'accepted', 'rejected'])->default('pending');
         });
 
-        // Master garasi. Kode unik; price_per_kwh hanya terisi untuk mobil listrik.
+        // simpan data garasi
         Schema::create('garages', function (Blueprint $t) {
             $t->id();
-            $t->string('code', 4)->unique();                 // S001 / C010 / E001
+            $t->string('code', 4)->unique();          
             $t->enum('type', ['sepeda', 'mobil', 'mobil_listrik']);
             $t->unsignedInteger('daily_price');
             $t->unsignedInteger('price_per_kwh')->nullable(); // khusus mobil listrik
             $t->timestamps();
         });
 
-        // Kendaraan milik penyewa (dihapus otomatis bila akun penyewa dihapus).
+        // simpan data kendaraan yang didaftar penyewa
         Schema::create('vehicles', function (Blueprint $t) {
             $t->id();
             $t->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -44,26 +39,25 @@ return new class extends Migration
             $t->timestamps();
         });
 
-        // Transaksi sewa. FK tanpa cascade: garasi/penyewa yang punya riwayat sewa tidak bisa dihapus.
+        // simpan tanggal, kendaraan, garasi, biaya, dan bukti pembayaran transaksi sewa
         Schema::create('rentals', function (Blueprint $t) {
             $t->id();
             $t->foreignId('user_id')->constrained();
             $t->foreignId('garage_id')->constrained();
             $t->foreignId('vehicle_id')->constrained();
             $t->enum('rental_type', ['harian', 'bulanan']);
-            $t->unsignedTinyInteger('days');                 // jumlah hari efektif
+            $t->unsignedTinyInteger('days');                 
             $t->date('start_date');
-            $t->date('end_date');                            // ikut berubah saat extend
+            $t->date('end_date');                            // berubah kalau ada perpanjangan
             $t->decimal('battery_remaining_kwh', 6, 2)->nullable();
             $t->decimal('kwh_to_charge', 6, 2)->nullable();
             $t->unsignedBigInteger('total_cost');
             $t->string('payment_proof');
             $t->timestamps();
-            // Indeks mempercepat query cek bentrok jadwal per garasi.
             $t->index(['garage_id', 'start_date', 'end_date']);
         });
 
-        // Riwayat perpanjangan sewa (dihapus otomatis bila sewa induknya dihapus).
+        // buat tabel untuk simpan riwayat perpanjang sewa
         Schema::create('rental_extensions', function (Blueprint $t) {
             $t->id();
             $t->foreignId('rental_id')->constrained()->cascadeOnDelete();
@@ -76,7 +70,7 @@ return new class extends Migration
         });
     }
 
-    /** Membatalkan migrasi (rollback): hapus tabel dari yang paling bergantung. */
+    // hapus tabel kalau migrasi dibatalkan
     public function down(): void
     {
         Schema::dropIfExists('rental_extensions');

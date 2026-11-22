@@ -5,12 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 
-/**
- * Controller admin: verifikasi pendaftar baru (terima / tolak setelah NIK diperiksa manual).
- */
 class VerificationController extends Controller
 {
-    /** Daftar penyewa yang masih berstatus "pending". */
+    // tampilkan pendaftar yang status masih pending
     public function index()
     {
         return view('admin.verifications.index', [
@@ -18,11 +15,12 @@ class VerificationController extends Controller
         ]);
     }
 
-    // Terima atau tolak pendaftaran; keduanya memakai setStatus().
+    // accept akun penyewa yang daftar
     public function accept(User $user) { return $this->setStatus($user, 'accepted'); }
+    // reject akun penyewa yang daftar
     public function reject(User $user) { return $this->setStatus($user, 'rejected'); }
 
-    /** Mengubah status verifikasi penyewa lalu kembali ke halaman sebelumnya dengan pesan. */
+    // simpan status verif
     private function setStatus(User $user, string $status)
     {
         $user->update(['verification_status' => $status]);

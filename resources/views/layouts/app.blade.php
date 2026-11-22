@@ -1,11 +1,9 @@
-{{-- Layout utama: dipakai semua halaman lewat @extends('layouts.app'). Berisi CSS sederhana, navbar menurut peran, dan area konten. --}}
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Penyewaan Garasi')</title>
-    <!-- CSS ditulis langsung di sini (tanpa Vite/Tailwind) agar setup sederhana. -->
     <style>
         body{font-family:system-ui,sans-serif;margin:0;background:#f4f5f7;color:#222}
         nav{background:#1f2937;padding:12px 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
@@ -26,31 +24,24 @@
 <body>
 <nav>
     <strong style="color:#fff">Penyewaan Garasi</strong>
-    {{-- Navbar hanya tampil untuk pengguna yang sudah login; menu berbeda untuk admin dan penyewa. --}}
     @auth
-        {{-- Menu admin --}}
         @if(auth()->user()->role === 'admin')
             <a href="{{ route('admin.garages.index') }}">Garasi</a>
             <a href="{{ route('admin.verifications.index') }}">Verifikasi</a>
             <a href="{{ route('admin.extensions.index') }}">Perpanjangan</a>
             <a href="{{ route('admin.reports') }}">Laporan</a>
-        {{-- Menu penyewa --}}
         @else
             <a href="{{ route('rentals.index') }}">Riwayat</a>
             <a href="{{ route('rentals.create') }}">Sewa Garasi</a>
         @endif
         <span class="sp"></span>
         <span style="color:#fff">{{ auth()->user()->name }}</span>
-        {{-- Logout memakai POST + @csrf (token CSRF) agar tidak bisa dipicu dari tautan luar. --}}
         <form method="POST" action="{{ route('logout') }}">@csrf<button>Keluar</button></form>
     @endauth
 </nav>
 <main>
-    {{-- Pesan sukses (flash message) dari controller: ->with('status', ...). --}}
     @if(session('status'))<div class="ok">{{ session('status') }}</div>@endif
-    {{-- Seluruh pesan error validasi / aturan bisnis ditampilkan di sini. --}}
     @if($errors->any())<div class="err">@foreach($errors->all() as $e)<div>{{ $e }}</div>@endforeach</div>@endif
-    {{-- Isi halaman dari masing-masing view (@section('content')). --}}
     @yield('content')
 </main>
 </body>

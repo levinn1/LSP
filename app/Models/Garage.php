@@ -5,32 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Model Garage: satu unit garasi yang disewakan.
- *
- * Tabel: garages. Tipe: sepeda (kode S###), mobil (C###), mobil_listrik (E###).
- * Satu garasi dapat memiliki banyak sewa (rentals) pada rentang tanggal berbeda.
- */
+// sepeda (kode S###), mobil (C###), mobil_listrik (E###)
 class Garage extends Model
 {
-    // Kolom yang boleh diisi lewat mass assignment (Garage::create / update).
+    // kolom buat atau update data garasi
     protected $fillable = ['code', 'type', 'daily_price', 'price_per_kwh'];
 
-    /** Relasi one-to-many: semua transaksi sewa pada garasi ini. */
+    // semua transaksi sewa pada garasi ini
     public function rentals(): HasMany
     {
         return $this->hasMany(Rental::class);
     }
 
-    /**
-     * Status "used" bila tanggal berada dalam rentang sewa, bukan sekadar sudah dipesan.
-     * Status tidak disimpan di kolom; dihitung dari rentang start_date s.d. end_date
-     * sehingga otomatis kembali "available" setelah masa sewa selesai.
-     */
+    // status "used" kalau masa sewa berlangsung
+    // status sesuai start_date dan end_date
+    // kalau masa sewa selesai status jadi "available"
     public function isUsedOn(\DateTimeInterface $date): bool
     {
         return $this->rentals()
-            // Ada sewa yang mulai sebelum/pada tanggal ini DAN selesai pada/setelah tanggal ini.
+            // ada garasi yang disewa di tanggal ini
             ->whereDate('start_date', '<=', $date)
             ->whereDate('end_date', '>=', $date)
             ->exists();

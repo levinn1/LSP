@@ -9,6 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    // buat tabel untuk simpan data pengguna, token reset password, dan sesi login
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
@@ -40,6 +41,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
+    // hapus tabel saat migrasi dibatalkan
     public function down(): void
     {
         Schema::dropIfExists('users');

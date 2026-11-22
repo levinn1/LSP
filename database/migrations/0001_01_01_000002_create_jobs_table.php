@@ -9,6 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    // buat tabel antrian pekerjaan, batch pekerjaan, dan pekerjaan yang gagal proses
     public function up(): void
     {
         Schema::create('jobs', function (Blueprint $table) {
@@ -50,6 +51,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
+    // hapus tabel antrian di migrasi ini
     public function down(): void
     {
         Schema::dropIfExists('jobs');

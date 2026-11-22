@@ -11,33 +11,25 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 
-/**
- * Controller penyewa: riwayat sewa, form sewa baru, dan penyimpanan sewa.
- * Controller dibuat tipis; aturan bisnis ada di RentalService dan RentalCalculator.
- */
 class RentalController extends Controller
 {
     public function __construct(private RentalService $service, private RentalCalculator $calc) {}
 
-    /** Riwayat sewa milik penyewa yang sedang login (10 per halaman, terbaru dulu). */
+    // tampilkan riwayat sewa
     public function index(Request $request)
     {
-        // with(): eager loading agar tidak terjadi query berulang (masalah N+1).
         $rentals = Rental::with(['garage', 'vehicle'])
             ->where('user_id', $request->user()->id)->latest()->paginate(10);
         return view('rentals.index', compact('rentals'));
     }
 
-    /** Menampilkan form sewa baru; tanggal mulai default hari ini. */
+    // tampilkan page buat sewa baru
     public function create()
     {
         return view('rentals.create', ['today' => CarbonImmutable::today()->toDateString()]);
     }
 
-    /**
-     * Endpoint JSON: daftar garasi yang tersedia untuk tipe kendaraan & rentang tanggal tertentu.
-     * Dipanggil lewat JavaScript (fetch) setiap kali input pada form sewa berubah.
-     */
+    // tampilkan daftar garasi yang tersedia sesuai pilihan
     public function availableGarages(Request $request)
     {
         $v = $request->validate([
@@ -47,25 +39,21 @@ class RentalController extends Controller
             'start_date'   => ['required', 'date'],
         ]);
 
+        // hitung tanggal akhir
         try {
-            // Hitung tanggal selesai dari jumlah hari; input tidak valid dibalas HTTP 422 berisi pesan error.
             $start = CarbonImmutable::parse($v['start_date']);
             $end = $this->calc->endDate($start, $this->calc->effectiveDays($v['rental_type'], $start, $v['days'] ?? null));
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         }
 
-        // Hanya kirim kolom yang dibutuhkan JavaScript.
         return response()->json($this->service->availableGarages($v['vehicle_type'], $start, $end)
             ->map(fn ($g) => ['id' => $g->id, 'code' => $g->code, 'type' => $g->type, 'daily_price' => $g->daily_price, 'price_per_kwh' => $g->price_per_kwh]));
     }
 
-    /** Menyimpan sewa baru: validasi form, simpan kendaraan, lalu buat sewa lewat RentalService. */
+    // validasi data sebelum buat penyewaan
     public function store(Request $request)
     {
-        // Aturan validasi: plat wajib kecuali sepeda; baterai wajib untuk mobil listrik
-        // (kapasitas maks. 500 kWh, sisa <= kapasitas); hari 1..30 untuk sewa harian;
-        // bukti pembayaran harus berupa gambar (maks. 4 MB).
         $v = $request->validate([
             'vehicle_type'         => ['required', 'in:sepeda,motor,mobil,mobil_listrik'],
             'plate'                => ['required_unless:vehicle_type,sepeda', 'nullable', 'string', 'max:12'],
@@ -80,15 +68,14 @@ class RentalController extends Controller
             'payment_proof'        => ['required', 'image', 'max:4096'],
         ]);
 
+        // simpan data kendaraan
         try {
-            // Simpan data kendaraan lebih dulu (tiap sewa membuat data kendaraan baru).
             $vehicle = Vehicle::create([
                 'user_id' => $request->user()->id, 'type' => $v['vehicle_type'],
                 'plate' => $v['plate'] ?? null, 'brand' => $v['brand'], 'model' => $v['model'],
                 'battery_capacity_kwh' => $v['battery_capacity_kwh'] ?? null,
             ]);
 
-            // Buat sewa; bukti pembayaran disimpan ke storage/app/public/proofs (diakses lewat storage:link).
             $rental = $this->service->create(
                 $request->user(), $vehicle, Garage::findOrFail($v['garage_id']),
                 $v['rental_type'], isset($v['days']) ? (int) $v['days'] : null,
@@ -97,7 +84,7 @@ class RentalController extends Controller
                 $request->file('payment_proof')->store('proofs', 'public'),
             );
         } catch (InvalidArgumentException $e) {
-            // Pelanggaran aturan bisnis: batalkan data kendaraan yang sudah terlanjur dibuat, tampilkan pesan error.
+            // hapus kendaraan kalau sewa gagal
             isset($vehicle) && $vehicle->delete();
             return back()->withErrors(['rental' => $e->getMessage()])->withInput();
         }

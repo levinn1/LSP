@@ -1,9 +1,9 @@
+{{-- // tampilan admin untuk edit garasi --}}
 @extends('layouts.app')
 @section('title', 'Edit Garasi')
 @section('content')
 <div class="card" style="max-width:480px">
     <h2>Edit Garasi {{ $garage->code }}</h2>
-    {{-- Form edit garasi. HTML hanya mengenal GET/POST, jadi @method('PUT') memalsukan metode PUT untuk rute update. --}}
     <form method="POST" action="{{ route('admin.garages.update', $garage) }}">
         @csrf @method('PUT')
         <label>Kode Garasi (S### / C### / E###)</label>
@@ -24,7 +24,6 @@
         <a class="btn red" href="{{ route('admin.garages.index') }}">Batal</a>
     </form>
 
-    {{-- Form hapus dipisah (di luar form edit) karena HTML tidak membolehkan form di dalam form. confirm() meminta persetujuan dulu. --}}
     <hr style="margin:20px 0;border:0;border-top:1px solid #e5e7eb">
 
     <form method="POST" action="{{ route('admin.garages.destroy', $garage) }}"
@@ -33,7 +32,6 @@
         <button class="btn red" style="margin-top:0">Hapus Garasi</button>
     </form>
 </div>
-<!-- JavaScript: tampilkan input harga kWh hanya bila tipe = Garasi Mobil Listrik. -->
 <script>
 const t = document.getElementById('type');
 const toggle = () => document.getElementById('kwh_row').style.display = t.value === 'mobil_listrik' ? '' : 'none';

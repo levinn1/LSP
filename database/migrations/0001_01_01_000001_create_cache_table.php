@@ -9,6 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    // buat cache aplikasi dan tabel cache lock untuk proses bersamaan
     public function up(): void
     {
         Schema::create('cache', function (Blueprint $table) {
@@ -27,6 +28,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
+    // hapus tabel cache dan cache lock kalau migrasi dibatalkan
     public function down(): void
     {
         Schema::dropIfExists('cache');
