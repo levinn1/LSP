@@ -8,7 +8,6 @@ use InvalidArgumentException;
 class RentalCalculator
 {
     public const MONTHLY_MULTIPLIER = 25;
-    public const MAX_DAILY_DAYS = 30;
 
     // tipe garasi yang boleh disewa berdasarkan kendaraan
     public const COMPATIBILITY = [
@@ -32,14 +31,21 @@ class RentalCalculator
         }
     }
 
+    // batas maksimum sewa harian = jumlah hari pada bulan tanggal mulai - 1
+    public function maxDailyDays(CarbonImmutable $start): int
+    {
+        return $start->daysInMonth - 1;
+    }
+
     // hitung jumlah hari sewa sesuai jenis sewa
     public function effectiveDays(string $type, CarbonImmutable $start, ?int $days): int
     {
         if ($type === 'bulanan') {
             return $start->daysInMonth;
         }
-        if ($days === null || $days < 1 || $days > self::MAX_DAILY_DAYS) {
-            throw new InvalidArgumentException('Sewa harian harus 1 sampai ' . self::MAX_DAILY_DAYS . ' hari.');
+        $max = $this->maxDailyDays($start);
+        if ($days === null || $days < 1 || $days > $max) {
+            throw new InvalidArgumentException("Sewa harian harus 1 sampai $max hari (jumlah hari pada bulan tanggal mulai dikurangi 1).");
         }
         return $days;
     }

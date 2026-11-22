@@ -20,17 +20,23 @@ class ReportController extends Controller
             'user_id' => ['nullable', 'exists:users,id'],
         ]);
 
-        // eager loading untuk hindari query berulang
-        $rentals = Rental::with(['garage', 'user', 'vehicle'])
+        // query dasar + filter (belum diurutkan/dipaginasi agar bisa dipakai juga untuk menghitung total)
+        $query = Rental::query()
             ->when($f['year'] ?? null, fn ($q, $v) => $q->whereYear('start_date', $v))
             ->when($f['month'] ?? null, fn ($q, $v) => $q->whereMonth('start_date', $v))
             ->when($f['day'] ?? null, fn ($q, $v) => $q->whereDay('start_date', $v))
             ->when($f['garage_type'] ?? null, fn ($q, $v) => $q->whereHas('garage', fn ($g) => $g->where('type', $v)))
-            ->when($f['user_id'] ?? null, fn ($q, $v) => $q->where('user_id', $v))
+            ->when($f['user_id'] ?? null, fn ($q, $v) => $q->where('user_id', $v));
+
+        // total biaya SEMUA hasil filter (bukan hanya baris pada halaman yang tampil)
+        $total = (int) (clone $query)->sum('total_cost');
+
+        // eager loading untuk hindari query berulang
+        $rentals = $query->with(['garage', 'user', 'vehicle'])
             ->orderBy('start_date')->paginate(20)->withQueryString();
 
         return view('admin.reports.index', [
-            'rentals' => $rentals, 'total' => $rentals->getCollection()->sum('total_cost'),
+            'rentals' => $rentals, 'total' => $total,
             'users' => User::where('role', 'penyewa')->orderBy('name')->get(), 'filters' => $f,
             'years' => $this->availableYears(),
         ]);

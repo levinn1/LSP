@@ -33,13 +33,13 @@ class RentalCalculatorTest extends TestCase
         $this->calc->assertStartDateValid(CarbonImmutable::parse('2026-11-20'), CarbonImmutable::parse('2026-11-21'));
     }
 
-    // cek durasi sewa harian dari 1 sampai 30 hari
-    public function test_harian_maksimal_30_hari(): void
+    // cek batas sewa harian = jumlah hari bulan mulai - 1 (November 30 hari => maks. 29)
+    public function test_harian_maksimal_n_min_1_hari(): void
     {
         $start = CarbonImmutable::parse('2026-11-21');
-        $this->assertSame(30, $this->calc->effectiveDays('harian', $start, 30));
+        $this->assertSame(29, $this->calc->effectiveDays('harian', $start, 29));
         $this->expectException(InvalidArgumentException::class);
-        $this->calc->effectiveDays('harian', $start, 31);
+        $this->calc->effectiveDays('harian', $start, 30);
     }
 
     // cek durasi bulanan mengikuti panjang bulan dan tahun

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-// sepeda (kode S###), mobil (C###), mobil_listrik (E###)
+// sepeda kode S, mobil C, mobil_listrik E
 class Garage extends Model
 {
     // kolom buat atau update data garasi

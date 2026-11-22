@@ -42,7 +42,7 @@
             <tr><td colspan="7">Tidak ada data.</td></tr>
         @endforelse
     </table>
-    <p><strong>Total halaman ini: Rp {{ number_format($total, 0, ',', '.') }}</strong></p>
+    <p><strong>Total {{ $rentals->total() }} transaksi (semua halaman): Rp {{ number_format($total, 0, ',', '.') }}</strong></p>
     {{ $rentals->links() }}
 </div>
 @endsection

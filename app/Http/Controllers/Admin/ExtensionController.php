@@ -7,6 +7,7 @@ use App\Models\Rental;
 use App\Services\RentalService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 
 class ExtensionController extends Controller
@@ -32,12 +33,14 @@ class ExtensionController extends Controller
             'payment_proof' => ['required', 'image', 'max:4096'],
         ]);
 
-        // simpan bukti pembayaran 
+        // simpan bukti pembayaran lebih dulu; file dihapus lagi bila perpanjangan ditolak
+        $proofPath = $request->file('payment_proof')->store('proofs', 'public');
+
         // jalankan validasi dan hitung biaya
         try {
-            $this->service->extend($request->user(), $rental, CarbonImmutable::parse($v['new_end_date']),
-                $request->file('payment_proof')->store('proofs', 'public'));
+            $this->service->extend($request->user(), $rental, CarbonImmutable::parse($v['new_end_date']), $proofPath);
         } catch (InvalidArgumentException $e) {
+            Storage::disk('public')->delete($proofPath);
             return back()->withErrors(['extend' => $e->getMessage()]);
         }
 
